@@ -4441,7 +4441,7 @@ void spritechat::Courtroom::on_ooc_return_pressed()
 
   if (server_ooc)
   {
-    transport.shipPacket(packet);
+    transport.shipVerifiedPacket(packet);
   }
 
   ui_ooc_chat_message->clear();
