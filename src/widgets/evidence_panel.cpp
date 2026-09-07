@@ -887,3 +887,10 @@ void spritechat::EvidencePanel::applyServerSettings()
   _nameBox->setMaxLength(_serverSettings->maxEvidenceNameLength);
   _descriptionBox->setMaxLength(_serverSettings->maxEvidenceDescriptionLength);
 }
+
+void spritechat::EvidencePanel::updateOverflowWarning()
+{
+  const double threshold = Options::getInstance().overflowWarningThreshold() / 100.0;
+  _nameBox->setThreshold(threshold);
+  _descriptionBox->setThreshold(threshold);
+}

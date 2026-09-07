@@ -151,6 +151,9 @@ public:
   int messageCapacity() const;
   void setMessageCapacity(int value);
 
+  int overflowWarningThreshold() const;
+  void setOverflowWarningThreshold(int value);
+
   // Returns whether the log should go upwards (new behaviour)
   // or downwards (vanilla behaviour).
   bool logDirectionDownwards() const;

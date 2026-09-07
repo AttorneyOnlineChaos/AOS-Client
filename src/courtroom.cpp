@@ -227,8 +227,6 @@ spritechat::Courtroom::Courtroom(AOApplication *p_ao_app, AreaRegistry &p_area_r
   ui_ooc_chat_message_box->setObjectName("ui_ooc_chat_message_box");
   ui_ooc_chat_message_box->counter()->setObjectName("ui_ooc_chat_message_counter");
 
-  update_message_capacity();
-
   ui_ooc_chat_name = new QLineEdit(this);
   ui_ooc_chat_name->setFrame(false);
   ui_ooc_chat_name->setPlaceholderText(tr("Name"));
@@ -585,7 +583,7 @@ spritechat::Courtroom::Courtroom(AOApplication *p_ao_app, AreaRegistry &p_area_r
 
   set_char_select();
 
-  update_mousewheel_direction();
+  apply_client_settings();
 }
 
 spritechat::Courtroom::~Courtroom()
@@ -666,13 +664,6 @@ spritechat::PlayerListWidget *spritechat::Courtroom::playerList()
   return ui_player_list;
 }
 
-void spritechat::Courtroom::update_message_capacity()
-{
-  const int capacity = Options::getInstance().messageCapacity();
-  ui_ic_chat_message->setCapacity(capacity);
-  ui_ooc_chat_message->setCapacity(capacity);
-}
-
 void spritechat::Courtroom::apply_server_settings()
 {
   ui_ooc_chat_name_box->setMaxLength(server_settings->maxNameLength);
@@ -687,13 +678,27 @@ void spritechat::Courtroom::apply_server_settings()
   }
 }
 
-void spritechat::Courtroom::update_mousewheel_direction()
+void spritechat::Courtroom::apply_client_settings()
 {
+  playerList()->reloadPlayers();
+
+  const int capacity = Options::getInstance().messageCapacity();
+  ui_ic_chat_message->setCapacity(capacity);
+  ui_ooc_chat_message->setCapacity(capacity);
+
   const theory::MousewheelGridNavigator::Direction direction = Options::getInstance().mousewheelGridNavigationReversed() ? theory::MousewheelGridNavigator::Reversed : theory::MousewheelGridNavigator::Normal;
   char_button_navigator->setDirection(direction);
   emote_navigator->setDirection(direction);
   ui_evidence_public->setMousewheelDirection(direction);
   ui_evidence_private->setMousewheelDirection(direction);
+
+  const double threshold = Options::getInstance().overflowWarningThreshold() / 100.0;
+  ui_ic_chat_name_box->setThreshold(threshold);
+  ui_ic_chat_message_box->setThreshold(threshold);
+  ui_ooc_chat_message_box->setThreshold(threshold);
+  ui_ooc_chat_name_box->setThreshold(threshold);
+  ui_evidence_public->updateOverflowWarning();
+  ui_evidence_private->updateOverflowWarning();
 }
 
 void spritechat::Courtroom::set_courtroom_size()

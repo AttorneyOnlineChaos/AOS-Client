@@ -155,6 +155,46 @@
              </property>
             </widget>
            </item>
+           <item row="8" column="0">
+            <widget class="QLabel" name="overflow_warning_lbl">
+             <property name="toolTip">
+              <string>The threshold to the length counter once an input goes near or beyond the character limit.</string>
+             </property>
+             <property name="text">
+              <string>Length warning:</string>
+             </property>
+             <property name="textFormat">
+              <enum>Qt::PlainText</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="8" column="1">
+            <layout class="QHBoxLayout" name="overflow_warning_layout">
+             <item>
+              <widget class="QSlider" name="overflow_warning_slider">
+               <property name="minimum">
+                <number>0</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="overflow_warning_value_lbl">
+               <property name="text">
+                <string>80%</string>
+               </property>
+               <property name="textFormat">
+                <enum>Qt::PlainText</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
            <item row="9" column="0">
             <widget class="QLabel" name="text_crawl_lbl">
              <property name="toolTip">

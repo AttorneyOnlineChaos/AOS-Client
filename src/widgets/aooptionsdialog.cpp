@@ -103,6 +103,18 @@ int spritechat::AOOptionsDialog::widgetData(QSpinBox *widget) const
 }
 
 template <>
+void spritechat::AOOptionsDialog::setWidgetData(QSlider *widget, const int &value)
+{
+  widget->setValue(value);
+}
+
+template <>
+int spritechat::AOOptionsDialog::widgetData(QSlider *widget) const
+{
+  return widget->value();
+}
+
+template <>
 void spritechat::AOOptionsDialog::setWidgetData(QDoubleSpinBox *widget, const double &value)
 {
   widget->setValue(value);
@@ -368,6 +380,10 @@ void spritechat::AOOptionsDialog::setupUI()
   l_ui.find(ui_animated_theme_cb, "animated_theme_cb");
   l_ui.find(ui_text_crawl_spinbox, "text_crawl_spinbox");
   l_ui.find(ui_chat_ratelimit_spinbox, "chat_ratelimit_spinbox");
+  l_ui.find(ui_overflow_warning_slider, "overflow_warning_slider");
+  l_ui.find(ui_overflow_warning_value_lbl, "overflow_warning_value_lbl");
+  connect(ui_overflow_warning_slider, &QSlider::valueChanged, this, &AOOptionsDialog::updateOverflowWarningLabel);
+  updateOverflowWarningLabel();
   l_ui.find(ui_username_textbox, "username_textbox");
   l_ui.find(ui_showname_cb, "showname_cb");
   l_ui.find(ui_default_showname_textbox, "default_showname_textbox");
@@ -397,6 +413,7 @@ void spritechat::AOOptionsDialog::setupUI()
   registerOption<QCheckBox, bool>("animated_theme_cb", &Options::animatedThemeEnabled, &Options::setAnimatedThemeEnabled);
   registerOption<QSpinBox, int>("text_crawl_spinbox", &Options::textCrawlSpeed, &Options::setTextCrawlSpeed);
   registerOption<QSpinBox, int>("chat_ratelimit_spinbox", &Options::chatRateLimit, &Options::setChatRateLimit);
+  registerOption<QSlider, int>("overflow_warning_slider", &Options::overflowWarningThreshold, &Options::setOverflowWarningThreshold);
   registerOption<QSpinBox, int>("message_capacity_spinbox", &Options::messageCapacity, &Options::setMessageCapacity);
   registerOption<QLineEdit, QString>("username_textbox", &Options::username, &Options::setUsername);
   registerOption<QCheckBox, bool>("showname_cb", &Options::customShownameEnabled, &Options::setCustomShownameEnabled);
@@ -625,6 +642,11 @@ void spritechat::AOOptionsDialog::onTimestampFormatEdited()
 void spritechat::AOOptionsDialog::timestampCbChanged(int state)
 {
   ui_log_timestamp_format_combobox->setDisabled(state == 0);
+}
+
+void spritechat::AOOptionsDialog::updateOverflowWarningLabel()
+{
+  ui_overflow_warning_value_lbl->setText(tr("%1%").arg(ui_overflow_warning_slider->value()));
 }
 
 #if (defined(_WIN32) || defined(_WIN64))

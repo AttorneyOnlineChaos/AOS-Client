@@ -61,6 +61,8 @@ public:
 
   void setMousewheelDirection(theory::MousewheelGridNavigator::Direction direction);
 
+  void updateOverflowWarning();
+
   void showItem(theory::EvidenceId id);
   void closeOverlay();
   void resetSelection();

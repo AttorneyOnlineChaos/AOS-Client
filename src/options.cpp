@@ -170,6 +170,16 @@ void spritechat::Options::setTextCrawlSpeed(int value)
   config.setValue("text_crawl", value);
 }
 
+int spritechat::Options::overflowWarningThreshold() const
+{
+  return config.value("overflow_warning_threshold", 80).toInt();
+}
+
+void spritechat::Options::setOverflowWarningThreshold(int value)
+{
+  config.setValue("overflow_warning_threshold", value);
+}
+
 int spritechat::Options::chatRateLimit() const
 {
   return config.value("chat_ratelimit", 300).toInt();

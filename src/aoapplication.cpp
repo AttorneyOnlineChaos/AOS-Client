@@ -160,9 +160,7 @@ void spritechat::AOApplication::call_settings_menu()
 
   if (is_courtroom_constructed())
   {
-    w_courtroom->playerList()->reloadPlayers();
-    w_courtroom->update_message_capacity();
-    w_courtroom->update_mousewheel_direction();
+    w_courtroom->apply_client_settings();
   }
 
   delete l_dialog;

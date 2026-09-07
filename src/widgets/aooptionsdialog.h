@@ -13,6 +13,7 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QSlider>
 #include <QSpinBox>
 #include <QTabWidget>
 #include <QTextBrowser>
@@ -54,6 +55,8 @@ private:
   QCheckBox *ui_animated_theme_cb;
   QSpinBox *ui_text_crawl_spinbox;
   QSpinBox *ui_chat_ratelimit_spinbox;
+  QSlider *ui_overflow_warning_slider;
+  QLabel *ui_overflow_warning_value_lbl;
   QFrame *ui_log_names_divider;
   QLineEdit *ui_username_textbox;
   QCheckBox *ui_showname_cb;
@@ -150,6 +153,7 @@ private Q_SLOTS:
   void buttonClicked(QAbstractButton *button);
   void onTimestampFormatEdited();
   void timestampCbChanged(int state);
+  void updateOverflowWarningLabel();
   void onReloadThemeClicked();
   void themeChanged(int i);
   void setupUI();

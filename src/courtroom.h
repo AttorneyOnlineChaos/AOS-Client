@@ -101,9 +101,8 @@ public:
 
   PlayerListWidget *playerList();
 
-  void update_message_capacity();
-  void update_mousewheel_direction();
   void apply_server_settings();
+  void apply_client_settings();
 
   void refresh_area(theory::AreaId n_area);
 
