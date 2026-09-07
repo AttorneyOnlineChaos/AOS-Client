@@ -1,5 +1,10 @@
 #include "spritechat_defs.h"
 
+bool spritechat::ChatMarkupEntry::isValid() const
+{
+  return index >= 0;
+}
+
 Q_LOGGING_CATEGORY(spritechat::log::main, "spritechat.main")
 Q_LOGGING_CATEGORY(spritechat::log::network, "spritechat.network")
 Q_LOGGING_CATEGORY(spritechat::log::protocol, "spritechat.protocol")

@@ -323,6 +323,31 @@ QColor spritechat::AssetLookup::get_chat_color(const QString &p_identifier, cons
   return return_color;
 }
 
+QList<theory::ChatMarkup> spritechat::AssetLookup::get_chat_colors(const QString &p_chat)
+{
+  static const QList<theory::ChatMarkup> defaults = theory::defaultChatMarkups();
+  const QString path = get_asset("chat_config.ini", Options::getInstance().theme(), Options::getInstance().subTheme(), default_theme, p_chat);
+  if (path.isEmpty())
+  {
+    zInfo(log::asset) << "chat_config.ini not found, using built-in chat markups";
+    return defaults;
+  }
+
+  QList<theory::ChatMarkup> colors;
+  if (const auto error = theory::loadChatMarkups(path, colors))
+  {
+    zWarning(log::asset) << "using built-in chat markups:" << error->toString();
+    return defaults;
+  }
+
+  if (colors.size() < defaults.size())
+  {
+    colors.append(defaults.mid(colors.size()));
+  }
+
+  return colors;
+}
+
 QString spritechat::AssetLookup::get_penalty_value(const QString &p_identifier)
 {
   return get_config_value(p_identifier, "penalty/penalty.ini", Options::getInstance().theme(), Options::getInstance().subTheme(), default_theme, "");

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.7.0)
 
-project(SpriteChat VERSION 2.11.0.0 LANGUAGES CXX C)
+project(SpriteChat VERSION 2.12.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -49,6 +49,10 @@ qt_add_library(spritechat STATIC
   src/ao_track.h
   src/ao_line_edit.cpp
   src/ao_line_edit.h
+  src/ao_plain_text_edit.cpp
+  src/ao_plain_text_edit.h
+  src/ao_syntax_highlighter.cpp
+  src/ao_syntax_highlighter.h
   src/ao_track_library.cpp
   src/ao_track_library.h
   src/ao_widget_lookup.h

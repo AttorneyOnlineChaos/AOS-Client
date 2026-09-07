@@ -12,7 +12,7 @@ QString spritechat::softwareDisplayName()
 
 QVersionNumber spritechat::softwareVersion()
 {
-  return QVersionNumber{2, 11, 0};
+  return QVersionNumber{2, 12, 0};
 }
 
 QString spritechat::softwareUserAgent()

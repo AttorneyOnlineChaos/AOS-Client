@@ -16,6 +16,10 @@
 #include "spritechat_defs.h"
 
 #include <QActionGroup>
+#include <QHBoxLayout>
+#include <QPainter>
+#include <QSizePolicy>
+#include <QTextCursor>
 #include <QtConcurrent/QtConcurrent>
 
 // #define DEBUG_TRANSITION
@@ -208,13 +212,11 @@ spritechat::Courtroom::Courtroom(AOApplication *p_ao_app, AreaRegistry &p_area_r
   ui_ic_chat_name_box->setObjectName("ui_ic_chat_name_box");
   ui_ic_chat_name_box->counter()->setObjectName("ui_ic_chat_name_counter");
 
-  ui_ic_chat_message = new AOLineEdit(this);
-  ui_ic_chat_message->setFrame(false);
+  ui_ic_chat_message = new AOPlainTextEdit(this);
+  ui_ic_chat_message->setFrameShape(QFrame::NoFrame);
   ui_ic_chat_message->setPlaceholderText(tr("Message in-character"));
-  ui_ic_chat_message_filter = new AOLineEditFilter();
-  ui_ic_chat_message_filter->preserve_selection = true;
-  ui_ic_chat_message->installEventFilter(ui_ic_chat_message_filter);
   ui_ic_chat_message->setObjectName("ui_ic_chat_message");
+  ui_ic_chat_message_highlighter = new AOSyntaxHighlighter(ui_ic_chat_message->document());
   ui_ic_chat_message_box = new theory::TextOverflowMonitor(ui_ic_chat_message, this);
   ui_ic_chat_message_box->setObjectName("ui_ic_chat_message_box");
   ui_ic_chat_message_box->counter()->setObjectName("ui_ic_chat_message_counter");
@@ -383,9 +385,24 @@ spritechat::Courtroom::Courtroom(AOApplication *p_ao_app, AreaRegistry &p_area_r
   ui_prosecution_minus = new AOButton(ao_app, this);
   ui_prosecution_minus->setObjectName("ui_prosecution_minus");
 
-  ui_text_color = new QComboBox(this);
+  ui_text_color_box = new QWidget(this);
+  ui_text_color_box->setAttribute(Qt::WA_StyledBackground);
+  ui_text_color_box->setObjectName("ui_text_color_box");
+
+  ui_text_color = new QComboBox(ui_text_color_box);
   ui_text_color->setContextMenuPolicy(Qt::CustomContextMenu);
+  ui_text_color->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
   ui_text_color->setObjectName("ui_text_color");
+
+  ui_text_color_apply = new AOButton(ao_app, ui_text_color_box);
+  ui_text_color_apply->setEnabled(false);
+  ui_text_color_apply->setObjectName("ui_text_color_apply");
+
+  QHBoxLayout *text_color_row = new QHBoxLayout(ui_text_color_box);
+  text_color_row->setContentsMargins(0, 0, 0, 0);
+  text_color_row->setSpacing(0);
+  text_color_row->addWidget(ui_text_color, 1);
+  text_color_row->addWidget(ui_text_color_apply);
 
   ui_music_slider = new QSlider(Qt::Horizontal, this);
   ui_music_slider->setRange(0, 100);
@@ -434,7 +451,6 @@ spritechat::Courtroom::Courtroom(AOApplication *p_ao_app, AreaRegistry &p_area_r
   initialize_evidence();
 
   // TODO : Properly handle widget creation order.
-  // Good enough for 2.11
   ui_mute_list->raise();
   ui_pair_list->raise();
 
@@ -469,7 +485,7 @@ spritechat::Courtroom::Courtroom(AOApplication *p_ao_app, AreaRegistry &p_area_r
   connect(ui_music_search, &QLineEdit::returnPressed, this, &Courtroom::on_music_search_return_pressed);
   connect(ui_mute_list, &QListWidget::clicked, this, &Courtroom::on_mute_list_clicked);
 
-  connect(ui_ic_chat_message, &QLineEdit::returnPressed, this, &Courtroom::on_chat_return_pressed);
+  connect(ui_ic_chat_message, &AOPlainTextEdit::returnPressed, this, &Courtroom::on_chat_return_pressed);
 
   connect(ui_ooc_chat_message, &QLineEdit::returnPressed, this, &Courtroom::on_ooc_return_pressed);
 
@@ -496,6 +512,8 @@ spritechat::Courtroom::Courtroom(AOApplication *p_ao_app, AreaRegistry &p_area_r
 
   connect(ui_text_color, &QComboBox::currentIndexChanged, this, &Courtroom::on_text_color_changed);
   connect(ui_text_color, &QComboBox::customContextMenuRequested, this, &Courtroom::on_text_color_context_menu_requested);
+  connect(ui_ic_chat_message, &AOPlainTextEdit::copyAvailable, this, &Courtroom::refresh_text_color_apply);
+  connect(ui_text_color_apply, &AOButton::clicked, this, &Courtroom::on_text_color_apply_clicked);
 
   connect(ui_music_slider, &QSlider::valueChanged, this, &Courtroom::on_music_slider_moved);
   connect(ui_sfx_slider, &QSlider::valueChanged, this, &Courtroom::on_sfx_slider_moved);
@@ -1180,10 +1198,11 @@ void spritechat::Courtroom::set_widgets()
   ui_prosecution_minus->setImage("prominus");
   ui_prosecution_minus->setToolTip(tr("Decrease the health bar."));
 
-  set_size_and_pos(ui_text_color, "text_color");
-  ui_text_color->setToolTip(tr("Change the text color of the spoken message.\n"
-                               "You can also select a part of your currently typed message and use "
-                               "the dropdown to change its color!"));
+  set_size_and_pos(ui_text_color_box, "text_color");
+  ui_text_color->setToolTip(tr("Change the text color of the spoken message."));
+  ui_text_color_apply->setFixedSize(ui_text_color_box->height(), ui_text_color_box->height());
+  ui_text_color_apply->setImage("text_color_apply");
+  ui_text_color_apply->setToolTip(tr("Apply the color markup to the highlighted text."));
   set_text_color_dropdown();
 
   set_size_and_pos(ui_music_slider, "music_slider");
@@ -1361,7 +1380,8 @@ void spritechat::Courtroom::set_stylesheets()
   set_stylesheet(this);
   this->setStyleSheet("QFrame { background-color:transparent; } "
                       "QAbstractItemView { background-color: transparent; color: black; } "
-                      "QLineEdit { background-color:transparent; }" +
+                      "QLineEdit { background-color:transparent; } "
+                      "QPlainTextEdit { background-color:transparent; }" +
                       this->styleSheet());
 }
 
@@ -2088,7 +2108,7 @@ void spritechat::Courtroom::on_chat_return_pressed()
   }
   packet.character = m_character;
   packet.emote = ao_app->get_emote(m_character.toString(), current_emote);
-  packet.message = ui_ic_chat_message->text();
+  packet.message = ui_ic_chat_message->toPlainText();
   packet.side = current_or_default_side();
 
   if (f_sfx == "1")
@@ -2143,9 +2163,9 @@ void spritechat::Courtroom::on_chat_return_pressed()
   packet.flip = ui_flip->isChecked();
   packet.realization = realization_state != 0;
 
-  if (text_color >= 0 && text_color < max_colors)
+  if (_currentColor.isValid())
   {
-    packet.textColor = text_color;
+    packet.textColor = _currentColor.index;
   }
 
   // If there is a showname entered, use that -- else, just send the
@@ -2217,7 +2237,7 @@ void spritechat::Courtroom::reset_ui()
   ui_ic_chat_message->clear();
   if (ui_additive->isChecked())
   {
-    ui_ic_chat_message->insert(" ");
+    ui_ic_chat_message->insertPlainText(" ");
   }
   objection_state = 0;
   realization_state = 0;
@@ -2279,6 +2299,10 @@ void spritechat::Courtroom::unpack_chatmessage(theory::IcMessagePacket packet)
   }
 
   m_previous_chatmessage = m_chatmessage;
+  if (packet.textColor < 0 || packet.textColor >= chat_colors.length())
+  {
+    packet.textColor = int(theory::ChatColor::White);
+  }
   m_chatmessage = packet;
 
   log_chatmessage();
@@ -3056,7 +3080,7 @@ void spritechat::Courtroom::handle_ic_speaking()
   }
 
   // Check if this is a talking color (white text, etc.)
-  color_is_talking = color_markdown_talking_list.at(m_chatmessage.textColor);
+  color_is_talking = !chat_colors.at(m_chatmessage.textColor).noSpeaker;
   QString filename;
   // If color is talking, and our state isn't already talking
   if (color_is_talking && text_state == 1 && anim_state < 2)
@@ -3224,17 +3248,17 @@ QString spritechat::Courtroom::filter_ic_text(QString p_text, bool html, int tar
       // Parse markdown colors
       else
       {
-        for (int c = 0; c < max_colors; ++c)
+        for (int c = 0; c < chat_colors.length(); ++c)
         {
           // Clear the stored optimization information
-          QString markdown_start = color_markdown_start_list.at(c);
-          QString markdown_end = color_markdown_end_list.at(c);
+          QString markdown_start = chat_colors.at(c).symbolStart;
+          QString markdown_end = chat_colors.at(c).symbolEnd;
           if (html)
           {
             markdown_start = markdown_start.toHtmlEscaped();
             markdown_end = markdown_end.toHtmlEscaped();
           }
-          bool markdown_remove = color_markdown_remove_list.at(c);
+          bool markdown_remove = chat_colors.at(c).removeSymbols;
           if (markdown_start.isEmpty()) // Not defined
           {
             continue;
@@ -3348,7 +3372,7 @@ QString spritechat::Courtroom::filter_ic_text(QString p_text, bool html, int tar
           // God forgive me for my transgressions but I have refactored this
           // whole thing about 25 times and having to refactor it again to more
           // elegantly support this will finally make me go insane.
-          color_is_talking = color_markdown_talking_list.at(ic_color_stack.top());
+          color_is_talking = !chat_colors.at(ic_color_stack.top()).noSpeaker;
         }
 
         // Clean it up, we're done here
@@ -3529,7 +3553,7 @@ void spritechat::Courtroom::append_ic_text(const QString &p_text, const QString 
     {
       QString p_text_filtered = filter_ic_text(p_text, true, -1, color);
       p_text_filtered = p_text_filtered.replace("$c0", chatlog_color.name(QColor::HexArgb));
-      for (int c = 1; c < max_colors; ++c)
+      for (int c = 1; c < chat_colors.length(); ++c)
       {
         QColor color_result = default_color_rgb_list.at(c);
         p_text_filtered = p_text_filtered.replace("$c" + QString::number(c), color_result.name(QColor::HexArgb));
@@ -3756,7 +3780,7 @@ void spritechat::Courtroom::start_chat_ticking()
 
   last_misc = current_misc;
   current_misc = ao_app->get_chat(m_chatmessage.character.toString());
-  if ((last_misc != current_misc || char_color_rgb_list.size() < max_colors) && Options::getInstance().customChatboxEnabled())
+  if ((last_misc != current_misc || char_color_rgb_list.size() < chat_colors.length()) && Options::getInstance().customChatboxEnabled())
   {
     gen_char_rgb_list(current_misc);
   }
@@ -3828,7 +3852,7 @@ void spritechat::Courtroom::chat_tick()
     QString f_message_filtered = filter_ic_text(f_message, true, -1, m_chatmessage.textColor);
     if (Options::getInstance().customChatboxEnabled())
     { // chatbox colors
-      for (int c = 0; c < max_colors; ++c)
+      for (int c = 0; c < chat_colors.length(); ++c)
       {
         additive_previous = additive_previous.replace("$c" + QString::number(c), char_color_rgb_list.at(c).name(QColor::HexRgb));
         f_message_filtered = f_message_filtered.replace("$c" + QString::number(c), char_color_rgb_list.at(c).name(QColor::HexRgb));
@@ -3836,7 +3860,7 @@ void spritechat::Courtroom::chat_tick()
     }
     else
     { // default colors
-      for (int c = 0; c < max_colors; ++c)
+      for (int c = 0; c < chat_colors.length(); ++c)
       {
         additive_previous = additive_previous.replace("$c" + QString::number(c), default_color_rgb_list.at(c).name(QColor::HexRgb));
         f_message_filtered = f_message_filtered.replace("$c" + QString::number(c), default_color_rgb_list.at(c).name(QColor::HexRgb));
@@ -3905,11 +3929,11 @@ void spritechat::Courtroom::chat_tick()
     else
     {
       // Parse markdown colors
-      for (int c = 0; c < max_colors; ++c)
+      for (int c = 0; c < chat_colors.length(); ++c)
       {
-        QString markdown_start = color_markdown_start_list.at(c);
-        QString markdown_end = color_markdown_end_list.at(c);
-        bool markdown_remove = color_markdown_remove_list.at(c);
+        QString markdown_start = chat_colors.at(c).symbolStart;
+        QString markdown_end = chat_colors.at(c).symbolEnd;
+        bool markdown_remove = chat_colors.at(c).removeSymbols;
         if (markdown_start.isEmpty())
         {
           continue;
@@ -3989,7 +4013,7 @@ void spritechat::Courtroom::chat_tick()
     QString f_message_filtered = filter_ic_text(f_message, true, tick_pos, m_chatmessage.textColor);
     if (Options::getInstance().customChatboxEnabled())
     { // use chatbox colors
-      for (int c = 0; c < max_colors; ++c)
+      for (int c = 0; c < chat_colors.length(); ++c)
       {
         additive_previous = additive_previous.replace("$c" + QString::number(c), char_color_rgb_list.at(c).name(QColor::HexRgb));
         f_message_filtered = f_message_filtered.replace("$c" + QString::number(c), char_color_rgb_list.at(c).name(QColor::HexRgb));
@@ -3997,7 +4021,7 @@ void spritechat::Courtroom::chat_tick()
     }
     else
     { // just use default colors
-      for (int c = 0; c < max_colors; ++c)
+      for (int c = 0; c < chat_colors.length(); ++c)
       {
         additive_previous = additive_previous.replace("$c" + QString::number(c), default_color_rgb_list.at(c).name(QColor::HexRgb));
         f_message_filtered = f_message_filtered.replace("$c" + QString::number(c), default_color_rgb_list.at(c).name(QColor::HexRgb));
@@ -5519,15 +5543,7 @@ void spritechat::Courtroom::set_text_color_dropdown()
 {
   // Clear the lists
   ui_text_color->clear();
-  color_row_to_number.clear();
-
-  // Clear the stored optimization information
-  color_rgb_list.clear();
   default_color_rgb_list.clear();
-  color_markdown_start_list.clear();
-  color_markdown_end_list.clear();
-  color_markdown_remove_list.clear();
-  color_markdown_talking_list.clear();
 
   // Update markdown colors. TODO: make a loading function that only loads the
   // config file once instead of several times
@@ -5536,41 +5552,48 @@ void spritechat::Courtroom::set_text_color_dropdown()
   {
     misc_to_check = ao_app->get_chat(m_character.toString()); // chatbox specific
   }
-  for (int c = 0; c < max_colors; ++c)
-  {
-    QColor color = ao_app->get_chat_color("c" + QString::number(c), misc_to_check);
-    color_rgb_list.append(color);
-    color_markdown_start_list.append(ao_app->get_chat_markup("c" + QString::number(c) + "_start", misc_to_check));
-    color_markdown_end_list.append(ao_app->get_chat_markup("c" + QString::number(c) + "_end", misc_to_check));
-    color_markdown_remove_list.append(ao_app->get_chat_markup("c" + QString::number(c) + "_remove", misc_to_check) == "1");
-    color_markdown_talking_list.append(ao_app->get_chat_markup("c" + QString::number(c) + "_talking", misc_to_check) != "0");
 
-    QString color_name = ao_app->get_chat_markup("c" + QString::number(c) + "_name", misc_to_check);
+  chat_colors = ao_app->get_chat_colors(misc_to_check);
+  for (int c = 0; c < chat_colors.length(); ++c)
+  {
+    zInfo(log::ic) << "Color " << c << ": rgb=" << chat_colors.at(c).color.name() << ", markdown_start=" << chat_colors.at(c).symbolStart << ", markdown_end=" << chat_colors.at(c).symbolEnd;
+  }
+  for (int c = 0; c < chat_colors.length(); ++c)
+  {
+    QString color_name = chat_colors.at(c).name;
     if (color_name.isEmpty()) // Not defined
     {
-      if (c > 0)
+      if (c == 0)
       {
-        continue;
+        color_name = tr("Default");
       }
-      color_name = tr("Default");
+      else
+      {
+        color_name = QStringLiteral("Color %1").arg(c);
+      }
     }
     ui_text_color->addItem(color_name);
     QPixmap pixmap(16, 16);
-    pixmap.fill(color);
+    QPainter painter{&pixmap};
+    painter.fillRect(pixmap.rect(), Qt::black);
+    painter.fillRect(pixmap.rect().adjusted(1, 1, -1, -1), chat_colors.at(c).color);
+    painter.end();
     ui_text_color->setItemIcon(ui_text_color->count() - 1, pixmap);
-    color_row_to_number.append(c);
   }
-  for (int c = 0; c < max_colors; ++c)
+  for (int c = 0; c < chat_colors.length(); ++c)
   {
     QColor color = ao_app->get_chat_color("c" + QString::number(c), "");
     default_color_rgb_list.append(color);
   }
+
+  ui_ic_chat_message_highlighter->setMarkup(chat_colors);
+  ui_ic_chat_message_highlighter->setDefaultColor(_currentColor.index);
 }
 
 void spritechat::Courtroom::gen_char_rgb_list(const QString &p_misc)
 {
   char_color_rgb_list.clear();
-  for (int c = 0; c < max_colors; ++c)
+  for (int c = 0; c < chat_colors.length(); ++c)
   {
     QColor color = ao_app->get_chat_color("c" + QString::number(c), p_misc);
     char_color_rgb_list.append(color);
@@ -5579,42 +5602,52 @@ void spritechat::Courtroom::gen_char_rgb_list(const QString &p_misc)
 
 void spritechat::Courtroom::on_text_color_changed(int p_color)
 {
-  if (ui_ic_chat_message->selectionStart() != -1) // We have a selection!
+  if (p_color >= 0 && p_color < chat_colors.size())
   {
-    int c = color_row_to_number.at(p_color);
-    QString markdown_start = color_markdown_start_list.at(c);
-    if (markdown_start.isEmpty())
-    {
-      zWarning(log::ic) << "Color list dropdown selected a non-existent markdown "
-                           "start character";
-      return;
-    }
-    QString markdown_end = color_markdown_end_list.at(c);
-    if (markdown_end.isEmpty())
-    {
-      markdown_end = markdown_start;
-    }
-    int start = ui_ic_chat_message->selectionStart();
-    int end = ui_ic_chat_message->selectionEnd() + 1;
-
-    ui_ic_chat_message->setCursorPosition(start);
-    ui_ic_chat_message->insert(markdown_start);
-    ui_ic_chat_message->setCursorPosition(end);
-    ui_ic_chat_message->insert(markdown_end);
-    //    ui_ic_chat_message->end(false);
-    ui_text_color->setCurrentIndex(0);
+    _currentColor = ChatMarkupEntry{.index = p_color, .markup = chat_colors.at(p_color)};
   }
   else
   {
-    if (p_color != -1 && p_color < color_row_to_number.size())
-    {
-      text_color = color_row_to_number.at(p_color);
-    }
-    else
-    {
-      text_color = 0;
-    }
+    _currentColor = ChatMarkupEntry{.index = -1};
   }
+  ui_ic_chat_message_highlighter->setDefaultColor(_currentColor.index);
+  refresh_text_color_apply();
+  focus_ic_input();
+}
+
+void spritechat::Courtroom::refresh_text_color_apply()
+{
+  const bool has_markup = _currentColor.isValid() && !_currentColor.markup.symbolStart.isEmpty();
+  ui_text_color_apply->setEnabled(has_markup && ui_ic_chat_message->textCursor().hasSelection());
+}
+
+void spritechat::Courtroom::on_text_color_apply_clicked()
+{
+  QString markdown_start = _currentColor.markup.symbolStart;
+  if (markdown_start.isEmpty())
+  {
+    zWarning(log::ic) << "Color list dropdown selected a non-existent markdown "
+                         "start character";
+    return;
+  }
+  QString markdown_end = _currentColor.markup.symbolEnd;
+  if (markdown_end.isEmpty())
+  {
+    markdown_end = markdown_start;
+  }
+  QTextCursor cursor = ui_ic_chat_message->textCursor();
+  const int start = cursor.selectionStart();
+  const int end = cursor.selectionEnd();
+
+  cursor.beginEditBlock();
+  cursor.setPosition(start);
+  cursor.insertText(markdown_start);
+  cursor.setPosition(end + markdown_start.size());
+  cursor.insertText(markdown_end);
+  cursor.endEditBlock();
+  ui_ic_chat_message->setTextCursor(cursor);
+  //    ui_ic_chat_message->end(false);
+  ui_text_color->setCurrentIndex(0);
   focus_ic_input();
 }
 
@@ -5742,10 +5775,10 @@ void spritechat::Courtroom::on_additive_clicked()
 {
   if (ui_additive->isChecked())
   {
-    ui_ic_chat_message->home(false); // move cursor to the start of the message
-    ui_ic_chat_message->insert(" "); // preface the message by whitespace
-    ui_ic_chat_message->end(false);  // move cursor to the end of the message
-                                     // without selecting anything
+    ui_ic_chat_message->moveCursor(QTextCursor::Start); // move cursor to the start of the message
+    ui_ic_chat_message->insertPlainText(" ");           // preface the message by whitespace
+    ui_ic_chat_message->moveCursor(QTextCursor::End);   // move cursor to the end of the message
+                                                        // without selecting anything
   }
   focus_ic_input();
 }

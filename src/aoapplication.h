@@ -7,6 +7,7 @@
 #include "core/log.h"
 #include "datatypes.h"
 #include "evidence_registry.h"
+#include "game/chat_markup.h"
 #include "game/emote_cue.h"
 #include "inventory_registry.h"
 #include "network/master_gateway.h"
@@ -152,6 +153,8 @@ public:
 
   // Returns the color from the misc folder.
   QColor get_chat_color(const QString &p_identifier, const QString &p_chat);
+
+  QList<theory::ChatMarkup> get_chat_colors(const QString &p_chat);
 
   // Returns the value with p_identifier from penalty/penalty.ini in the current
   // theme path

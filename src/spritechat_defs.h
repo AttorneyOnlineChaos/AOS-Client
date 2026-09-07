@@ -1,9 +1,19 @@
 #pragma once
 
+#include "game/chat_markup.h"
+
 #include <QLoggingCategory>
 
 namespace spritechat
 {
+struct ChatMarkupEntry
+{
+  int index = 0;
+  theory::ChatMarkup markup;
+
+  bool isValid() const;
+};
+
 namespace log
 {
 Q_DECLARE_LOGGING_CATEGORY(main)

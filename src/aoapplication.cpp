@@ -366,6 +366,11 @@ QColor spritechat::AOApplication::get_chat_color(const QString &p_identifier, co
   return m_asset_lookup.get_chat_color(p_identifier, p_chat);
 }
 
+QList<theory::ChatMarkup> spritechat::AOApplication::get_chat_colors(const QString &p_chat)
+{
+  return m_asset_lookup.get_chat_colors(p_chat);
+}
+
 QString spritechat::AOApplication::get_penalty_value(const QString &p_identifier)
 {
   return m_asset_lookup.get_penalty_value(p_identifier);

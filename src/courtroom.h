@@ -2,6 +2,8 @@
 
 #include "animationlayer.h"
 #include "ao_line_edit.h"
+#include "ao_plain_text_edit.h"
+#include "ao_syntax_highlighter.h"
 #include "ao_track_library.h"
 #include "aoapplication.h"
 #include "aoblipplayer.h"
@@ -20,9 +22,9 @@
 #include "chatlogpiece.h"
 #include "datatypes.h"
 #include "debug_functions.h"
-#include "eventfilters.h"
 #include "evidence_registry.h"
 #include "file_functions.h"
+#include "game/chat_markup.h"
 #include "game/evidence.h"
 #include "game/music.h"
 #include "hardware_functions.h"
@@ -36,6 +38,7 @@
 #include "screenslidetimer.h"
 #include "scrolltext.h"
 #include "server_settings_handle.h"
+#include "spritechat_defs.h"
 #include "timer.h"
 #include "widgets/aooptionsdialog.h"
 #include "widgets/evidence_panel.h"
@@ -432,17 +435,9 @@ private:
   QList<CustomObjection> custom_objections_list;
   int realization_state = 0;
   int screenshake_state = 0;
-  int text_color = 0;
+  ChatMarkupEntry _currentColor;
 
-  // How many unique user colors are possible
-  static const int max_colors = 12;
-
-  // Text Color-related optimization:
-  // Current color list indexes to real color references
-  QList<int> color_row_to_number;
-
-  // List of associated RGB colors for this color index
-  QList<QColor> color_rgb_list;
+  QList<theory::ChatMarkup> chat_colors;
 
   // Same as above but populated from misc/default's config
   QList<QColor> default_color_rgb_list;
@@ -455,17 +450,6 @@ private:
   QString current_misc;
   QString last_misc;
 
-  // List of markdown start characters, their index is tied to the color index
-  QStringList color_markdown_start_list;
-
-  // List of markdown end characters, their index is tied to the color index
-  QStringList color_markdown_end_list;
-
-  // Whether or not we're supposed to remove this char during parsing
-  QList<bool> color_markdown_remove_list;
-
-  // Whether or not this color allows us to play the talking animation
-  QList<bool> color_markdown_talking_list;
   // Text Color-related optimization END
 
   // Current list file sorted line by line
@@ -569,8 +553,8 @@ private:
 
   QComboBox *ui_pair_order_dropdown;
 
-  AOLineEdit *ui_ic_chat_message;
-  AOLineEditFilter *ui_ic_chat_message_filter;
+  AOPlainTextEdit *ui_ic_chat_message;
+  AOSyntaxHighlighter *ui_ic_chat_message_highlighter;
   theory::TextOverflowMonitor *ui_ic_chat_message_box;
   QLineEdit *ui_ic_chat_name;
   theory::TextOverflowMonitor *ui_ic_chat_name_box;
@@ -651,7 +635,9 @@ private:
   AOButton *ui_prosecution_plus;
   AOButton *ui_prosecution_minus;
 
+  QWidget *ui_text_color_box;
   QComboBox *ui_text_color;
+  AOButton *ui_text_color_apply;
 
   QSlider *ui_music_slider;
   QSlider *ui_sfx_slider;
@@ -811,6 +797,8 @@ private Q_SLOTS:
   void on_prosecution_plus_clicked();
 
   void on_text_color_changed(int p_color);
+  void refresh_text_color_apply();
+  void on_text_color_apply_clicked();
   void on_text_color_context_menu_requested(const QPoint &pos);
   void set_text_color_dropdown();
 

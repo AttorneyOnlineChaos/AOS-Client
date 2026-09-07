@@ -1,6 +1,7 @@
 #pragma once
 
 #include "datatypes.h"
+#include "game/chat_markup.h"
 #include "game/emote_cue.h"
 
 #include <QColor>
@@ -81,6 +82,7 @@ public:
   QColor get_color(const QString &p_identifier, const QString &p_file);
   QString get_chat_markup(const QString &p_identifier, const QString &p_file);
   QColor get_chat_color(const QString &p_identifier, const QString &p_chat);
+  QList<theory::ChatMarkup> get_chat_colors(const QString &p_chat);
   QString get_penalty_value(const QString &p_identifier);
   QString get_court_sfx(const QString &p_identifier, const QString &p_misc = QString());
   QString get_stylesheet(const QString &p_file);
