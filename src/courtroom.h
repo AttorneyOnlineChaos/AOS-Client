@@ -406,10 +406,7 @@ private:
 
   QString additive_previous;
 
-  // char id, muted or not
   QSet<theory::PlayerId> muted_players;
-
-  // QList<int> muted_cids;
 
   // state of animation, 0 = objecting, 1 = preanim, 2 = talking, 3 = idle, 4 =
   // noniterrupting preanim, 5 = (c) animation

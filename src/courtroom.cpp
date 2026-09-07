@@ -2259,7 +2259,6 @@ void spritechat::Courtroom::reset_ui()
 
 void spritechat::Courtroom::unpack_chatmessage(theory::IcMessagePacket packet)
 {
-  // We muted this char, gtfo
   if (muted_players.contains(packet.playerId))
   {
     return;
