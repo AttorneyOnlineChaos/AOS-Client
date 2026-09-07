@@ -552,6 +552,14 @@ spritechat::Courtroom::Courtroom(AOApplication *p_ao_app, AreaRegistry &p_area_r
   connect(&player_registry, &PlayerRegistry::updated, this, &Courtroom::set_pair_list);
   connect(&player_registry, &PlayerRegistry::cleared, this, &Courtroom::set_pair_list);
 
+  connect(&player_registry, &PlayerRegistry::added, this, &Courtroom::set_mute_list);
+  connect(&player_registry, &PlayerRegistry::updated, this, &Courtroom::set_mute_list);
+  connect(&player_registry, &PlayerRegistry::cleared, this, &Courtroom::set_mute_list);
+  connect(&player_registry, &PlayerRegistry::removed, this, [this](theory::PlayerId id) {
+    muted_players.remove(id);
+    set_mute_list();
+  });
+
   connect(&player_registry, &PlayerRegistry::added, this, &Courtroom::list_areas);
   connect(&player_registry, &PlayerRegistry::removed, this, &Courtroom::list_areas);
   connect(&player_registry, &PlayerRegistry::updated, this, &Courtroom::list_areas);
@@ -726,27 +734,26 @@ void spritechat::Courtroom::set_courtroom_size()
 
 void spritechat::Courtroom::set_mute_list()
 {
-  mute_map.clear();
+  ui_mute_list->clear();
 
-  // maps which characters are muted based on cid, none are muted by default
-  for (const theory::CharacterId &n_cid : std::as_const(char_list))
+  const auto me = player_registry.player(ao_app->m_player_id);
+  if (!me)
   {
-    mute_map.insert(n_cid, false);
+    return;
   }
 
-  QStringList sorted_mute_list;
+  const theory::AreaId my_area = me->areaId;
+  const QList<PlayerInfo> others = player_registry.playersIf([this, my_area](const PlayerInfo &player) { return player.id != ao_app->m_player_id && player.areaId == my_area && player.character != theory::NoCharacterId; });
 
-  for (const theory::CharacterId &i_char : std::as_const(char_list))
+  for (const PlayerInfo &player : others)
   {
-    sorted_mute_list.append(i_char.toString());
-  }
-
-  sorted_mute_list.sort();
-
-  for (const QString &i_name : sorted_mute_list)
-  {
-    // mute_map.insert(i_name, false);
-    ui_mute_list->addItem(i_name);
+    QString label = "[" + QString::number(player.id) + "] " + player.character.toString();
+    if (muted_players.contains(player.id))
+    {
+      label.append(" [x]");
+    }
+    QListWidgetItem *item = new QListWidgetItem(label, ui_mute_list);
+    item->setData(Qt::UserRole, player.id);
   }
 }
 
@@ -2253,7 +2260,7 @@ void spritechat::Courtroom::reset_ui()
 void spritechat::Courtroom::unpack_chatmessage(theory::IcMessagePacket packet)
 {
   // We muted this char, gtfo
-  if (mute_map.value(packet.character))
+  if (muted_players.contains(packet.playerId))
   {
     return;
   }
@@ -4230,7 +4237,7 @@ void spritechat::Courtroom::handle_song(const theory::MusicChangedPacket &packet
     {
       str_show = packet.characterName.value();
     }
-    if (!mute_map.value(n_char))
+    if (!muted_players.contains(packet.playerId))
     {
       bool selfname = n_char == m_character;
       if (is_stop)
@@ -4987,37 +4994,16 @@ int spritechat::Courtroom::get_char_sfx_delay()
 
 void spritechat::Courtroom::on_mute_list_clicked(QModelIndex p_index)
 {
-  QListWidgetItem *f_item = ui_mute_list->item(p_index.row());
-  QString f_char = f_item->text();
-  QString real_char;
-
-  if (f_char.endsWith(" [x]"))
+  const theory::PlayerId clicked = ui_mute_list->item(p_index.row())->data(Qt::UserRole).toInt();
+  if (muted_players.contains(clicked))
   {
-    real_char = f_char.left(f_char.size() - 4);
+    muted_players.remove(clicked);
   }
   else
   {
-    real_char = f_char;
+    muted_players.insert(clicked);
   }
-
-  theory::CharacterId f_cid{real_char};
-
-  if (!char_list.contains(f_cid))
-  {
-    zWarning(log::character) << "" << real_char << " not present in char_list";
-    return;
-  }
-
-  if (mute_map.value(f_cid))
-  {
-    mute_map.insert(f_cid, false);
-    f_item->setText(real_char);
-  }
-  else
-  {
-    mute_map.insert(f_cid, true);
-    f_item->setText(real_char + " [x]");
-  }
+  set_mute_list();
 }
 
 void spritechat::Courtroom::on_pair_list_clicked(QModelIndex p_index)

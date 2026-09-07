@@ -407,7 +407,7 @@ private:
   QString additive_previous;
 
   // char id, muted or not
-  QHash<theory::CharacterId, bool> mute_map;
+  QSet<theory::PlayerId> muted_players;
 
   // QList<int> muted_cids;
 
