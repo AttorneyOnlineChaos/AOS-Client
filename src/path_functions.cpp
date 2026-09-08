@@ -277,7 +277,6 @@ QString spritechat::AssetLookup::get_sfx_path(const QList<VPath> &pathlist)
 QString spritechat::AssetLookup::get_config_value(const QString &p_identifier, const QString &p_config, const QString &p_theme, const QString &p_subtheme, const QString &p_default_theme, const QString &p_misc)
 {
   QString path;
-  //    qDebug() << "got request for" << p_identifier << "in" << p_config;
   const auto paths = get_asset_paths(p_config, p_theme, p_subtheme, p_default_theme, p_misc);
   for (const VPath &p : paths)
   {

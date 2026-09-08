@@ -336,7 +336,6 @@ private:
   // determines how fast messages tick onto screen
   QTimer *chat_tick_timer;
 
-  // int chat_tick_interval = 60;
   // which tick position(character in chat message) we are at
   int tick_pos = 0;
   // the actual document tick pos we gotta worry about for making the text
@@ -565,7 +564,6 @@ private:
   QLineEdit *ui_ooc_chat_name;
   theory::TextOverflowMonitor *ui_ooc_chat_name_box;
 
-  // QLineEdit *ui_area_password;
   QLineEdit *ui_music_search;
 
   theory::NavigableGrid *ui_emotes;

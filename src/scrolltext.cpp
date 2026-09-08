@@ -6,7 +6,6 @@ spritechat::ScrollText::ScrollText(QWidget *parent)
 {
   staticText.setTextFormat(Qt::PlainText);
 
-  //    setFixedHeight(fontMetrics().height()*2); //The theme sets this
   leftMargin = height() / 3;
 
   setSeparator("   ---   ");
@@ -92,7 +91,6 @@ void spritechat::ScrollText::paintEvent(QPaintEvent *)
     }
     pb.drawImage(0, 0, alphaChannel);
 
-    // pb.end();
     p.drawImage(0, 0, buffer);
   }
   else

@@ -238,8 +238,6 @@ spritechat::Courtroom::Courtroom(AOApplication *p_ao_app, AreaRegistry &p_area_r
   ui_ooc_chat_name_box->setObjectName("ui_ooc_chat_name_box");
   ui_ooc_chat_name_box->counter()->setObjectName("ui_ooc_chat_name_counter");
 
-  // ui_area_password = new QLineEdit(this);
-  // ui_area_password->setFrame(false);
   ui_music_search = new QLineEdit(this);
   ui_music_search->setFrame(false);
   ui_music_search->setPlaceholderText(tr("Search"));
@@ -982,7 +980,6 @@ void spritechat::Courtroom::set_widgets()
 
   set_size_and_pos(ui_ooc_chat_name_box, "ooc_chat_name");
 
-  // set_size_and_pos(ui_area_password, "area_password");
   set_size_and_pos(ui_music_search, "music_search");
 
   set_size_and_pos(ui_emote_dropdown, "emote_dropdown");
@@ -1691,7 +1688,6 @@ void spritechat::Courtroom::enter_courtroom()
   update_audio_volume();
 
   ui_vp_testimony->stopPlayback();
-  // ui_server_chatlog->setHtml(ui_server_chatlog->toHtml());
 }
 
 // Todo: multithread this due to some servers having large as hell music list
@@ -1709,7 +1705,6 @@ void spritechat::Courtroom::list_music()
   }
 
   ui_music_list->clear();
-  //  ui_music_search->setText("");
 
   QString f_file = "courtroom_design.ini";
 
@@ -2339,7 +2334,6 @@ void spritechat::Courtroom::log_chatmessage()
 
   if (log_ic_actions)
   {
-    // QString f_custom_theme = ao_app->get_chat(f_char);
     if (m_chatmessage.shout.type != theory::ShoutType::None)
     {
       blankpost = false;
@@ -3208,19 +3202,6 @@ QString spritechat::Courtroom::filter_ic_text(QString p_text, bool html, int tar
       f_character = f_rest.left(tbf.position());
     }
 
-    //    if (f_character == "&") //oh shit it's probably an escaped html
-    //    {
-    //      //Skip escaped chars like you would graphemes
-    //      QRegularExpression re("&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});",
-    //      QRegularExpression::CaseInsensitiveOption); QRegularExpressionMatch
-    //      match = re.match(f_rest); if (match.hasMatch()) //OH SHIT IT IS,
-    //      PANIC, PANIC
-    //      {
-    //        f_character = match.captured(0); //Phew, we solved the big problem
-    //        here.
-    //      }
-    //    }
-
     f_char_bytes = f_char_length = f_character.length();
 
     if (html)
@@ -3336,10 +3317,6 @@ QString spritechat::Courtroom::filter_ic_text(QString p_text, bool html, int tar
         QString appendage = "<br/>";
         if (!html)
         {
-          // actual newline commented out
-          //          appendage = "\n";
-          //          size = 1; //yeah guess what \n is a "single character"
-          //          apparently
           appendage = "\\n "; // visual representation of a newline
         }
         p_text_escaped.insert(check_pos_escaped, appendage);
@@ -4322,7 +4299,6 @@ void spritechat::Courtroom::handle_song(const theory::MusicChangedPacket &packet
 
 void spritechat::Courtroom::handle_wtce(const theory::SplashPacket &packet)
 {
-  // QString sfx_file = "courtroom_sounds.ini";
   QString bg_misc = ao_app->read_design_ini("misc", ao_app->get_background_path("design.ini"));
   QString sfx_name;
   QString filename;
@@ -5646,7 +5622,6 @@ void spritechat::Courtroom::on_text_color_apply_clicked()
   cursor.insertText(markdown_end);
   cursor.endEditBlock();
   ui_ic_chat_message->setTextCursor(cursor);
-  //    ui_ic_chat_message->end(false);
   ui_text_color->setCurrentIndex(0);
   focus_ic_input();
 }
