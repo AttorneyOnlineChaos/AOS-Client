@@ -761,7 +761,7 @@ void spritechat::Courtroom::set_mute_list()
   }
 
   const theory::AreaId my_area = me->areaId;
-  const QList<PlayerInfo> others = player_registry.playersIf([this, my_area](const PlayerInfo &player) { return player.id != ao_app->m_player_id && player.areaId == my_area && player.character != theory::NoCharacterId; });
+  const QList<PlayerInfo> others = player_registry.playersIf([this, my_area](const PlayerInfo &player) { return player.id != ao_app->m_player_id && (player.areaId == my_area || muted_players.contains(player.id)) && player.character != theory::NoCharacterId; });
 
   for (const PlayerInfo &player : others)
   {
@@ -787,7 +787,7 @@ void spritechat::Courtroom::set_pair_list()
   }
 
   const theory::AreaId my_area = me->areaId;
-  const QList<PlayerInfo> partners = player_registry.playersIf([this, my_area](const PlayerInfo &player) { return player.id != ao_app->m_player_id && player.areaId == my_area && player.character != theory::NoCharacterId; });
+  const QList<PlayerInfo> partners = player_registry.playersIf([this, my_area](const PlayerInfo &player) { return player.id != ao_app->m_player_id && (player.areaId == my_area || player.id == other_player_id) && player.character != theory::NoCharacterId; });
 
   bool partner_listed = false;
   for (const PlayerInfo &player : partners)
